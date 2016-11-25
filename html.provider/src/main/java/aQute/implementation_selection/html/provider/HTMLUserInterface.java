@@ -22,23 +22,19 @@ import aQute.implementation_selection.api.UserInterface;
 import osgi.enroute.http.capabilities.RequireHttpImplementation;
 import osgi.enroute.webserver.capabilities.RequireWebServerExtender;
 
-@Component(property = HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN
-		+ "=/userinterface/*")
+@Component(property = HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN + "=/userinterface/*")
 @RequireHttpImplementation
 @RequireWebServerExtender
-public class HTMLUserInterface extends HttpServlet
-		implements UserInterface, Servlet {
-	private static final long								serialVersionUID	= 1L;
+public class HTMLUserInterface extends HttpServlet implements UserInterface, Servlet {
+	private static final long serialVersionUID = 1L;
 
-	private final ConcurrentHashMap<PrintWriter, Semaphore>	outputs				= new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<PrintWriter, Semaphore> outputs = new ConcurrentHashMap<>();
 
-	@Reference(target = "(launcher.arguments=-mode:server)")
-	Object													launcher;
+	Object launcher;
 
 	@Activate
 	void activate() {
-		System.out.println("Goto http://localhost:"
-				+ System.getProperty("org.osgi.service.http.port")
+		System.out.println("Goto http://localhost:" + System.getProperty("org.osgi.service.http.port")
 				+ "/implementation-selection/index.html");
 	}
 
@@ -48,8 +44,7 @@ public class HTMLUserInterface extends HttpServlet
 	}
 
 	@Override
-	public void doGet(HttpServletRequest rq, HttpServletResponse response)
-			throws IOException {
+	public void doGet(HttpServletRequest rq, HttpServletResponse response) throws IOException {
 
 		response.setContentType("text/event-stream");
 
@@ -59,7 +54,7 @@ public class HTMLUserInterface extends HttpServlet
 		Semaphore s = new Semaphore(0);
 		outputs.put(response.getWriter(), s);
 		try {
-			while ( !s.tryAcquire(5, TimeUnit.SECONDS) )
+			while (!s.tryAcquire(5, TimeUnit.SECONDS))
 				response.getWriter().println();
 		} catch (InterruptedException e) {
 			// ignore, just closes the connection
@@ -82,4 +77,9 @@ public class HTMLUserInterface extends HttpServlet
 		}
 	}
 
+	@Reference(target = "(launcher.arguments=-mode:server)")
+	void bindLauncher(Object launcher) {
+		System.out.println("binding launcher...");
+		this.launcher = launcher;
+	}
 }
